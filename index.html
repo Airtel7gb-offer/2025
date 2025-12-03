@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Airtel 7GB Free Internet Campaign 2025</title>
+    
+    <!-- ফন্ট ও আইকন -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- প্রয়োজনীয় লাইব্রেরি -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FingerprintJS (শক্তিশালী অ্যান্টি-চিট এর জন্য) -->
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+
+    <style>
+        :root {
+            --airtel-red: #E40000;
+            --airtel-dark: #B30000;
+            --glass-bg: rgba(255, 255, 255, 0.96);
+            --text-dark: #333333;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+            background-color: #f4f4f4; color: var(--text-dark);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            overflow-x: hidden; position: relative;
+        }
+        
+        /* ব্যাকগ্রাউন্ড অ্যানিমেশন */
+        .bg-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); z-index: -2; }
+        .blob { position: absolute; filter: blur(70px); z-index: -1; opacity: 0.4; animation: float 10s infinite ease-in-out; }
+        .blob-1 { width: 300px; height: 300px; background: rgba(228, 0, 0, 0.2); top: -50px; left: -50px; border-radius: 50%; }
+        .blob-2 { width: 250px; height: 250px; background: rgba(255, 215, 0, 0.15); bottom: -50px; right: -50px; border-radius: 50%; animation-delay: 5s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, -30px); } }
+
+        .container { width: 92%; max-width: 400px; position: relative; z-index: 10; }
+        .logo-box {
+            background: white; color: var(--airtel-red); font-weight: 800; font-size: 28px;
+            padding: 8px 25px; border-radius: 12px; display: inline-block;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 25px;
+        }
+        .card {
+            background: var(--glass-bg); border: 1px solid white; border-radius: 24px;
+            padding: 30px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center;
+        }
+        h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+        p { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 25px; }
+
+        /* ইনপুট ফিল্ড */
+        .input-wrapper {
+            display: flex; align-items: center; background: white; border-radius: 15px;
+            border: 1px solid #eee; margin-bottom: 20px; padding: 5px 15px;
+        }
+        .prefix { font-weight: 600; color: #333; margin-right: 10px; }
+        input { border: none; width: 100%; padding: 12px 0; font-size: 18px; outline: none; font-weight: 600; }
+
+        /* বাটন ডিজাইন */
+        .btn {
+            width: 100%; padding: 15px; border: none; border-radius: 14px;
+            font-size: 16px; font-weight: 600; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 10px; transition: 0.2s;
+            color: white; margin-bottom: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(135deg, var(--airtel-red), var(--airtel-dark)); box-shadow: 0 5px 15px rgba(228,0,0,0.2); }
+        
+        /* সোশ্যাল বাটন */
+        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-fb { background: #1877F2; }
+        .btn-wa { background: #25D366; grid-column: span 2; }
+        .btn-tg { background: #229ED9; }
+        .btn-tw { background: #1DA1F2; }
+        
+        .btn-claim { background: #e0e0e0; color: #999; cursor: not-allowed; margin-top: 10px; }
+        .btn-claim.active {
+            background: linear-gradient(135deg, #FFD700, #FFA500); color: #8B4513; cursor: pointer;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* প্রগ্রেস বার */
+        .progress-box { background: white; padding: 15px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #f0f0f0; }
+        .bar-bg { height: 10px; background: #eee; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .bar-fill { height: 100%; background: var(--airtel-red); width: 0%; transition: width 0.5s; }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
+        /* টোস্ট মেসেজ */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
+            text-align: center; border-radius: 50px; padding: 12px; position: fixed;
+            z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 40px; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-wrapper"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <div style="text-align: center;">
+            <div class="logo-box">airtel</div>
+        </div>
+
+        <!-- 1. লগিন সেকশন -->
+        <div id="section-login" class="card fade-in">
+            <h1>ফ্রি <span style="color: var(--airtel-red);">৭ জিবি</span> ইন্টারনেট</h1>
+            <p>আপনার এয়ারটেল নম্বর দিয়ে অফারের যোগ্যতা যাচাই করুন।</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-wrapper">
+                    <span class="prefix">+880</span>
+                    <input type="tel" id="mobileNumber" placeholder="16XXXXXXXX" maxlength="10" required>
+                </div>
+                <button type="submit" class="btn btn-primary">যাচাই করুন <i class="fas fa-arrow-right"></i></button>
+            </form>
+            <p id="login-error" style="color: red; font-size: 12px; margin-top: 10px; display: none;"></p>
+        </div>
+
+        <!-- 2. ড্যাশবোর্ড সেকশন -->
+        <div id="section-dashboard" class="card hidden fade-in">
+            <h2 style="font-size: 20px; margin-bottom: 5px;">অভিনন্দন! 🎉</h2>
+            <p style="font-size: 14px; margin-bottom: 15px;">অফারটি আনলক করতে <strong style="color: var(--airtel-red);">৭ জন বন্ধুকে</strong> শেয়ার করুন।</p>
+
+            <!-- প্রগ্রেস -->
+            <div class="progress-box">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 5px;">
+                    <span>আপনার অগ্রগতি</span>
+                    <span id="progress-text" style="color: var(--airtel-red);">Loading...</span>
+                </div>
+                <div class="bar-bg"><div id="progress-fill" class="bar-fill"></div></div>
+                <p id="status-msg" style="font-size: 12px; margin: 0; color: #666;">শেয়ার করে বার পূর্ণ করুন...</p>
+            </div>
+
+            <!-- শেয়ার বাটনস -->
+            <button onclick="share('wa')" class="btn btn-wa"><i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপে শেয়ার করুন</button>
+            <div class="social-grid">
+                <button onclick="share('fb')" class="btn btn-fb"><i class="fab fa-facebook-f"></i> ফেইসবুক</button>
+                <button onclick="share('tg')" class="btn btn-tg"><i class="fab fa-telegram-plane"></i> টেলিগ্রাম</button>
+                <button onclick="share('tw')" class="btn btn-tw"><i class="fab fa-twitter"></i> টুইটার</button>
+                <button onclick="copyLink()" class="btn" style="background: #333; grid-column: span 2;"><i class="fas fa-link"></i> লিংক কপি করুন</button>
+            </div>
+
+            <button id="btn-claim" onclick="claimOffer()" class="btn btn-claim" disabled>
+                <i class="fas fa-gift"></i> ৭ জিবি ক্লেম করুন
+            </button>
+        </div>
+
+        <!-- 3. সাকসেস সেকশন -->
+        <div id="section-success" class="card hidden fade-in">
+            <div style="width: 80px; height: 80px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                <i class="fas fa-check" style="color: #2e7d32; font-size: 40px;"></i>
+            </div>
+            <h1 style="color: #2e7d32; font-size: 24px;">অভিনন্দন!</h1>
+            <p>আপনার রিকোয়েস্ট সফল হয়েছে। আগামী ৩০ মিনিটের মধ্যে ৭ জিবি ইন্টারনেট পাবেন।</p>
+            <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px; background: #333;">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="toast">লিংক কপি করা হয়েছে!</div>
+    <!-- Hidden link holder for copy function -->
+    <input type="text" id="hidden-ref-link" style="position: absolute; left: -9999px;">
+
+    <script>
+        // ==========================================
+        // ⚙️ সেটিংস (SUPABASE & ADS)
+        // ==========================================
+        const SUPABASE_URL = 'https://xnlkbayierhmxztshxqk.supabase.co'; // আপনার URL দিন
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhubGtiYXlpZXJobXh6dHNoeHFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NzEyNjAsImV4cCI6MjA4MDM0NzI2MH0.epSeAUuYZ9JEOFy_GGoeJsdeFgm9BMOagaAka5NN7-I'; // আপনার Anon Key দিন
+        
+        const MONETAG_LINK = "https://otieu.com/4/10252788"; // আপনার অ্যাড লিংক
+        const TARGET_REFERRALS = 7;
+
+        // Supabase এবং Fingerprint ইনিশিয়ালাইজেশন
+        const { createClient } = supabase;
+        const _db = createClient(SUPABASE_URL, SUPABASE_KEY);
+        let fpPromise = FingerprintJS.load();
+        
+        let currentUserPhone = null;
+        let deviceID = null;
+
+        // --- লোড হওয়ার সাথে সাথে ---
+        window.onload = async () => {
+            // ডিভাইস ফিঙ্গারপ্রিন্ট নেওয়া
+            const fp = await fpPromise;
+            const result = await fp.get();
+            deviceID = result.visitorId;
+            console.log("Device ID:", deviceID);
+
+            // আগে লগিন করা থাকলে অটো ড্যাশবোর্ড
+            const savedPhone = localStorage.getItem('airtel_user_phone');
+            if(savedPhone) {
+                await fetchUserData(savedPhone);
+            }
+        };
+
+        // --- ১. লগিন এবং অ্যান্টি-চিট চেকিং ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const errorMsg = document.getElementById('login-error');
+            const originalText = btn.innerHTML;
+            
+            let phone = document.getElementById('mobileNumber').value.replace(/\D/g,'');
+            if(phone.length !== 10) { showToast("সঠিক মোবাইল নম্বর দিন"); return; }
+            phone = "01" + phone.substring(phone.length - 8);
+
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> যাচাই হচ্ছে...';
+            btn.disabled = true;
+            errorMsg.style.display = 'none';
+
+            try {
+                // ১. আইপি এড্রেস নেওয়া
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                const userIP = ipData.ip;
+
+                // ২. চেক: এই ডিভাইসে আগে অন্য কোনো একাউন্ট খোলা হয়েছে কি না? (Strict Anti-Cheat)
+                // প্রথমে দেখি ফোন নম্বরটি ডাটাবেজে আছে কি না
+                let { data: userByPhone, error: phoneError } = await _db.from('users').select('*').eq('phone_number', phone).single();
+                
+                // চেক: ফোন নম্বর নেই, কিন্তু ডিভাইস আইডি আছে কি না (অর্থাৎ নতুন একাউন্ট খোলার চেষ্টা করছে পুরনো ডিভাইস দিয়ে)
+                let { data: userByDevice, error: deviceError } = await _db.from('users').select('*').eq('device_id', deviceID).single();
+
+                if (!userByPhone && userByDevice) {
+                    throw new Error("এই ডিভাইসে ইতিমধ্যে একটি অফার চালু আছে। নতুন একাউন্ট করা যাবে না।");
+                }
+
+                // ৩. যদি ইউজার না থাকে, নতুন ইউজার তৈরি করো
+                if (!userByPhone) {
+                    const { data: newUser, error: insertError } = await _db.from('users').insert([
+                        { 
+                            phone_number: phone, 
+                            device_id: deviceID, 
+                            ip_address: userIP 
+                        }
+                    ]).select();
+                    
+                    if(insertError) throw insertError;
+
+                    // ৪. রেফারেল কাউন্ট প্রসেস করা
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const referrerPhone = urlParams.get('ref');
+
+                    if(referrerPhone && referrerPhone !== phone) {
+                        // রেফারেল টেবিলে ইনসার্ট (ট্রিগার অটো কাউন্ট বাড়াবে)
+                        await _db.from('referrals').insert({
+                            referrer_phone: referrerPhone,
+                            referee_phone: phone,
+                            referee_device_id: deviceID // ডিভাইসের ভিত্তিতে ভ্যালিডেশন হবে
+                        });
+                    }
+                } else {
+                    // যদি ইউজার আগে থেকেই থাকে, এবং ডিভাইস আইডি ভিন্ন হয় (চিটিং প্রোটেকশন)
+                    if(userByPhone.device_id !== deviceID) {
+                        // অপশনাল: লগিন করতে দিতে পারেন, কিন্তু আমরা সিকিউরিটির জন্য আটকাতে পারি
+                        // আপাতত লগিন করতে দিচ্ছি
+                    }
+                }
+
+                // সফল লগিন
+                localStorage.setItem('airtel_user_phone', phone);
+                await fetchUserData(phone);
+
+            } catch (err) {
+                console.error(err);
+                errorMsg.innerText = err.message || "সার্ভার সমস্যা, আবার চেষ্টা করুন";
+                errorMsg.style.display = 'block';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- ২. ইউজার ডাটা এবং ড্যাশবোর্ড ---
+        async function fetchUserData(phone) {
+            currentUserPhone = phone;
+            showSection('section-dashboard');
+            
+            // রেফার লিংক তৈরি করা
+            const baseUrl = window.location.href.split('?')[0];
+            const refLink = `${baseUrl}?ref=${phone}`;
+            document.getElementById('hidden-ref-link').value = refLink;
+
+            // লাইভ ডাটা আনা
+            const { data, error } = await _db.from('users').select('referral_count, has_claimed').eq('phone_number', phone).single();
+            
+            if(data) {
+                updateUI(data.referral_count);
+                if(data.has_claimed) {
+                    const btn = document.getElementById('btn-claim');
+                    btn.innerHTML = '<i class="fas fa-check"></i> ইতিমধ্যে ক্লেইম করেছেন';
+                    btn.disabled = true;
+                }
+            }
+        }
+
+        function updateUI(count) {
+            const percent = Math.min((count / TARGET_REFERRALS) * 100, 100);
+            document.getElementById('progress-fill').style.width = `${percent}%`;
+            document.getElementById('progress-text').innerText = `${count}/${TARGET_REFERRALS}`;
+            
+            const btn = document.getElementById('btn-claim');
+            const msg = document.getElementById('status-msg');
+
+            if(count >= TARGET_REFERRALS) {
+                btn.disabled = false;
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-unlock"></i> অফারটি গ্রহণ করুন';
+                msg.innerHTML = '<span style="color:#2e7d32; font-weight:bold;">টার্গেট পূরণ হয়েছে!</span>';
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                const left = TARGET_REFERRALS - count;
+                msg.innerText = `আর মাত্র ${left} জনকে শেয়ার করলে অফার আনলক হবে।`;
+            }
+        }
+
+        // --- ৩. শেয়ারিং সিস্টেম ---
+        // --- ৩. আপডেটেড শেয়ারিং সিস্টেম (Facebook App Fix) ---
+        function share(platform) {
+            const link = document.getElementById('hidden-ref-link').value;
+            // মেসেজ কাস্টমাইজ করুন
+            const text = "🎉 এয়ারটেল দিচ্ছে ফ্রি ৭ জিবি ইন্টারনেট! মেয়াদ ৩০ দিন। এখনই লিংকে ক্লিক করে নিয়ে নিন: ";
+            
+            const fullUrl = encodeURIComponent(link);
+            const fullText = encodeURIComponent(text);
+
+            // ১. ফেইসবুক এর জন্য স্পেশাল লজিক (App vs Browser)
+            if(platform === 'fb') {
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                    // মোবাইলে হলে অ্যাপ ওপেন করার চেষ্টা করবে
+                    // fb://facewebmodal/f?href= এই স্কিমটি অ্যাপের ইন্টারনাল ব্রাউজার ট্রিগার করে অ্যাপ ওপেন করে
+                    const appUrl = `fb://facewebmodal/f?href=${fullUrl}`;
+                    const webUrl = `https://www.facebook.com/sharer/sharer.php?u=${fullUrl}`;
+
+                    // চেষ্টা ১: অ্যাপ ওপেন করা
+                    window.location.href = appUrl;
+
+                    // ফলব্যাক: যদি অ্যাপ না থাকে, ৫০০ms পর ব্রাউজারে নিবে
+                    setTimeout(function() {
+                        window.location.href = webUrl;
+                    }, 500);
+                    return; 
+                } else {
+                    // পিসি হলে সরাসরি ব্রাউজারে
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${fullUrl}`, '_blank');
+                    return;
+                }
+            }
+
+            // ২. অন্যান্য প্ল্যাটফর্ম (আগের মতোই)
+            let shareUrl = "";
+            if(platform === 'wa') {
+                shareUrl = `https://wa.me/?text=${fullText}%20${fullUrl}`;
+            } else if(platform === 'tg') {
+                shareUrl = `https://t.me/share/url?url=${fullUrl}&text=${fullText}`;
+            } else if(platform === 'tw') {
+                shareUrl = `https://twitter.com/intent/tweet?url=${fullUrl}&text=${fullText}`;
+            }
+
+            // উইন্ডো ওপেন করা
+            if(shareUrl) {
+                window.open(shareUrl, '_blank');
+            }
+        }
+
+        function copyLink() {
+            const link = document.getElementById('hidden-ref-link').value;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(link).then(() => showToast("লিংক কপি করা হয়েছে!"));
+            } else {
+                const input = document.getElementById('hidden-ref-link');
+                input.style.display = 'block';
+                input.style.left = '0';
+                input.select();
+                document.execCommand('copy');
+                input.style.left = '-9999px';
+                showToast("লিংক কপি করা হয়েছে!");
+            }
+        }
+
+        // --- ৪. ক্লেইম লজিক ---
+        async function claimOffer() {
+            const btn = document.getElementById('btn-claim');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> প্রসেসিং...';
+            
+            // ডাটাবেজে ক্লেইম আপডেট
+            await _db.from('users').update({ has_claimed: true }).eq('phone_number', currentUserPhone);
+
+            // অ্যাড ওপেন
+            window.open(MONETAG_LINK, '_blank');
+
+            // ১০ সেকেন্ড পর সাকসেস মেসেজ
+            setTimeout(() => {
+                showSection('section-success');
+                confetti({ particleCount: 200, spread: 150 });
+                localStorage.removeItem('airtel_user_phone'); // রিসেট
+            }, 5000);
+        }
+
+        // ইউটিলিটি
+        function showSection(id) {
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function showToast(msg) {
+            const x = document.getElementById("toast");
+            x.innerText = msg; x.className = "show";
+            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        }
+    </script>
+</body>
+</html>
